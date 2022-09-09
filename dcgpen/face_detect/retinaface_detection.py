@@ -10,10 +10,10 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
-from dcgpen.layers.functions.prior_box import PriorBox
 
 from data import cfg_re50
 from facemodels.retinaface import RetinaFace
+from layers.functions.prior_box import PriorBox
 from utils.box_utils import decode, decode_landm
 from utils.nms.py_cpu_nms import py_cpu_nms
 
