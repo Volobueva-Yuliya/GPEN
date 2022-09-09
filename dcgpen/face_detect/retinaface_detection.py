@@ -10,11 +10,12 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
-from dcgpen.data import cfg_re50
-from dcgpen.facemodels.retinaface import RetinaFace
 from dcgpen.layers.functions.prior_box import PriorBox
-from dcgpen.utils.box_utils import decode, decode_landm
-from dcgpen.utils.nms.py_cpu_nms import py_cpu_nms
+
+from data import cfg_re50
+from facemodels.retinaface import RetinaFace
+from utils.box_utils import decode, decode_landm
+from utils.nms.py_cpu_nms import py_cpu_nms
 
 
 class RetinaFaceDetection(object):
