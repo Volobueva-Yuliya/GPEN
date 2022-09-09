@@ -1,5 +1,4 @@
-from setuptools import setup, find_packages
-
+from setuptools import find_packages, setup
 
 setup(
     name='dcgpen',
@@ -20,7 +19,7 @@ setup(
         'pillow',
     ],
     include_package_data=True,
-    package_data={'': ['*.yaml']},
+    package_data={'': ['*.yaml', '* .cu', '* .cpp', '* .h']},
     long_description=open('README.md', encoding='utf-8').read(),
     long_description_content_type='text/markdown'
 )
