@@ -19,10 +19,10 @@ setup(
         'pillow',
     ],
     include_package_data=True,
-    package_data={'*.yaml',
-                  '* .cu',
-                  '* .cpp',
-                  '* .h'},
+    package_data={'1': '*.yaml',
+                  '2': '* .cu',
+                  '3': '* .cpp',
+                  '4': '* .h'},
     long_description=open('README.md', encoding='utf-8').read(),
     long_description_content_type='text/markdown'
 )
