@@ -8,10 +8,10 @@ import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
-from dcgpen.parse_model import ParseNet
+from dcgpen.face_parce.parse_model import ParseNet
 
 
-class FaceParse(object):
+class FaceParse:
     def __init__(self, base_dir='./',
                  model='ParseNet-latest', device='cuda'):
         self.mfile = os.path.join(base_dir, 'weights', model + '.pth')
