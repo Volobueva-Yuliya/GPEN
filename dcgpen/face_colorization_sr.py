@@ -1,12 +1,12 @@
 import cv2
 import numpy as np
 
-import __init_paths
-from align_faces import get_reference_facial_points, warp_and_crop_face
-from face_detect.retinaface_detection import RetinaFaceDetection
-from face_model.face_gan import FaceGAN
-from face_parse.face_parsing import FaceParse
-from sr_model.real_esrnet import RealESRNet
+from dcgpen import __init_paths
+from dcgpen.align_faces import get_reference_facial_points, warp_and_crop_face
+from dcgpen.face_detect.retinaface_detection import RetinaFaceDetection
+from dcgpen.face_model.face_gan import FaceGAN
+from dcgpen.face_parse.face_parsing import FaceParse
+from dcgpen.sr_model.real_esrnet import RealESRNet
 
 
 class FaceColorizationSR:

@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
-from dcgpen.face_parce.parse_model import ParseNet
+from dcgpen.face_parse.parse_model import ParseNet
 
 
 class FaceParse:
