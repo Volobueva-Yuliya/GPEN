@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-import dcgpen.__init_paths
+import __init_paths
 from align_faces import get_reference_facial_points, warp_and_crop_face
 from face_detect.retinaface_detection import RetinaFaceDetection
 from face_model.face_gan import FaceGAN
