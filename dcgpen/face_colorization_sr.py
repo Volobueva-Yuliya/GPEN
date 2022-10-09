@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+from skvideo.io import FFmpegWriter
+from tqdm.auto import tqdm
 
 from dcgpen import __init_paths
 from dcgpen.align_faces import get_reference_facial_points, warp_and_crop_face
@@ -10,8 +12,18 @@ from dcgpen.sr_model.real_esrnet import RealESRNet
 
 
 class FaceColorizationSR:
-    def __init__(self, base_dir='./', in_size=1024, out_size=None, use_sr=True,
-                 model=None, channel_multiplier=2, narrow=1, key=None, device='cuda'):
+    def __init__(
+        self,
+        base_dir="./",
+        in_size=1024,
+        out_size=None,
+        use_sr=True,
+        model=None,
+        channel_multiplier=2,
+        narrow=1,
+        key=None,
+        device="cuda",
+    ):
         self.facegan = FaceGAN(
             base_dir,
             in_size,
@@ -20,7 +32,8 @@ class FaceColorizationSR:
             channel_multiplier,
             narrow,
             key,
-            device=device)
+            device=device,
+        )
         self.facedetector = RetinaFaceDetection(base_dir, device)
         self.threshold = 0.9
         self.in_size = in_size
@@ -28,20 +41,22 @@ class FaceColorizationSR:
         self.alpha = 1
         self.out_size = in_size if out_size is None else out_size
         self.use_sr = use_sr
-        self.srmodel = RealESRNet(
-            base_dir, 'realesrnet', 2, 1024, device=device)
+        self.srmodel = RealESRNet(base_dir, "realesrnet", 2, 1024, device=device)
 
         # get the reference 5 landmarks position in the crop settings
         default_square = True
         inner_padding_factor = 0.25
         outer_padding = (0, 0)
         self.reference_5pts = get_reference_facial_points(
-            (self.in_size, self.in_size), inner_padding_factor, outer_padding, default_square)
+            (self.in_size, self.in_size),
+            inner_padding_factor,
+            outer_padding,
+            default_square,
+        )
 
         # the mask for pasting restored faces back
         self.mask = np.zeros((512, 512), np.float32)
-        cv2.rectangle(self.mask, (26, 26), (486, 486),
-                      (1, 1, 1), -1, cv2.LINE_AA)
+        cv2.rectangle(self.mask, (26, 26), (486, 486), (1, 1, 1), -1, cv2.LINE_AA)
         self.mask = cv2.GaussianBlur(self.mask, (101, 101), 4)
         self.mask = cv2.GaussianBlur(self.mask, (101, 101), 4)
 
@@ -82,8 +97,7 @@ class FaceColorizationSR:
         full_mask = np.zeros((height, width), dtype=np.float32)
         full_img = np.zeros(img.shape, dtype=np.uint8)
 
-        for i, (faceb, facial5points) in enumerate(
-                zip(facebs, landms)):
+        for i, (faceb, facial5points) in enumerate(zip(facebs, landms)):
             if faceb[4] < self.threshold:
                 continue
             fh, fw = (faceb[3] - faceb[1]), (faceb[2] - faceb[0])
@@ -91,8 +105,11 @@ class FaceColorizationSR:
             facial5points = np.reshape(facial5points, (2, 5))
 
             of, tfm_inv = warp_and_crop_face(
-                img, facial5points, reference_pts=self.reference_5pts, crop_size=(
-                    self.in_size, self.in_size))
+                img,
+                facial5points,
+                reference_pts=self.reference_5pts,
+                crop_size=(self.in_size, self.in_size),
+            )
 
             if self.use_sr:
                 img_sr = self.srmodel.process(of)
@@ -108,35 +125,60 @@ class FaceColorizationSR:
             orig_faces.append(of)
             enhanced_faces.append(ef)
 
-            #tmp_mask = self.mask
-            tmp_mask = self.mask_postprocess(
-                self.faceparser.process(ef)[0] / 255.)
-            tmp_mask = cv2.resize(
-                tmp_mask, (self.in_size, self.in_size))
-            tmp_mask = cv2.warpAffine(
-                tmp_mask, tfm_inv, (width, height), flags=3)
+            # tmp_mask = self.mask
+            tmp_mask = self.mask_postprocess(self.faceparser.process(ef)[0] / 255.0)
+            tmp_mask = cv2.resize(tmp_mask, (self.in_size, self.in_size))
+            tmp_mask = cv2.warpAffine(tmp_mask, tfm_inv, (width, height), flags=3)
 
             if min(fh, fw) < 100:  # gaussian filter for small faces
                 ef = cv2.filter2D(ef, -1, self.kernel)
 
-            ef = cv2.addWeighted(
-                ef, self.alpha, of, 1. - self.alpha, 0.0)
+            ef = cv2.addWeighted(ef, self.alpha, of, 1.0 - self.alpha, 0.0)
 
             if self.in_size != self.out_size:
                 ef = cv2.resize(ef, (self.in_size, self.in_size))
-            tmp_img = cv2.warpAffine(
-                ef, tfm_inv, (width, height), flags=3)
+            tmp_img = cv2.warpAffine(ef, tfm_inv, (width, height), flags=3)
 
             mask = tmp_mask - full_mask
-            full_mask[np.where(mask > 0)
-                      ] = tmp_mask[np.where(mask > 0)]
+            full_mask[np.where(mask > 0)] = tmp_mask[np.where(mask > 0)]
             full_img[np.where(mask > 0)] = tmp_img[np.where(mask > 0)]
 
         full_mask = full_mask[:, :, np.newaxis]
         # if self.use_sr and img_sr is not None:
         #     img = cv2.convertScaleAbs(img_sr*(1-full_mask) + full_img*full_mask)
         # else:
-        img = cv2.convertScaleAbs(
-            img * (1 - full_mask) + full_img * full_mask)
+        img = cv2.convertScaleAbs(img * (1 - full_mask) + full_img * full_mask)
 
         return img, orig_faces, enhanced_faces
+
+
+def read_write_video(class_object, filename: str, outputdict, cap, fps: str):
+    """Read and write video
+
+    Parameters
+    ----------
+    class_object: object of colorization class
+    filename: video file path for writing
+    outputdict: output dictionary parameters, i.e. how to encode the data when writing to file.
+    cap: object class for video capturing from video file
+    fps
+
+    Returns
+    -------
+    none
+    """
+    writer = FFmpegWriter(
+        filename,
+        inputdict={"-r": fps},
+        outputdict=outputdict,
+    )
+    with tqdm(total=int(cap.get(cv2.CAP_PROP_FRAME_COUNT))) as bar:
+        while True:
+            success, frame = cap.read()
+            if not success:
+                cap.release()
+                writer.close()
+                break
+            img_out, _, _ = class_object.process(frame, aligned=False)
+            writer.writeFrame(img_out[..., ::-1])
+            bar.update()
