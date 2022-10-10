@@ -42,6 +42,10 @@ class FaceColorizationSR:
         self.out_size = in_size if out_size is None else out_size
         self.use_sr = use_sr
         self.srmodel = RealESRNet(base_dir, "realesrnet", 2, 1024, device=device)
+        self.kernel = np.array(
+            ([0.0625, 0.125, 0.0625], [0.125, 0.25, 0.125], [0.0625, 0.125, 0.0625]),
+            dtype="float32",
+        )
 
         # get the reference 5 landmarks position in the crop settings
         default_square = True
