@@ -1,13 +1,34 @@
-'''
+"""
 @paper: GAN Prior Embedded Network for Blind Face Restoration in the Wild (CVPR2021)
 @author: yangxy (yangtao9009@gmail.com)
-'''
+"""
 import cv2
-from face_model.face_gan import FaceGAN
+
+from dcgpen.face_model.face_gan import FaceGAN
+
 
 class FaceColorization(object):
-    def __init__(self, base_dir='./', in_size=1024, out_size=1024, model=None, channel_multiplier=2, narrow=1, key=None, device='cuda'):
-        self.facegan = FaceGAN(base_dir, in_size, out_size, model, channel_multiplier, narrow, key, device=device)
+    def __init__(
+        self,
+        base_dir="./",
+        in_size=1024,
+        out_size=1024,
+        model=None,
+        channel_multiplier=2,
+        narrow=1,
+        key=None,
+        device="cuda",
+    ):
+        self.facegan = FaceGAN(
+            base_dir,
+            in_size,
+            out_size,
+            model,
+            channel_multiplier,
+            narrow,
+            key,
+            device=device,
+        )
 
     def post_process(self, gray, out):
         out_rs = cv2.resize(out, gray.shape[:2][::-1])
@@ -28,5 +49,3 @@ class FaceColorization(object):
             out = self.post_process(gray, out)
 
         return out, [gray], [out]
-        
-        

@@ -1,20 +1,33 @@
-'''
+"""
 @paper: GAN Prior Embedded Network for Blind Face Restoration in the Wild (CVPR2021)
 @author: yangxy (yangtao9009@gmail.com)
-'''
-import torch
-import os
-import cv2
+"""
 import glob
+import os
+
+import cv2
 import numpy as np
-from torch import nn
+import torch
 import torch.nn.functional as F
+from dcgpen.face_model.gpen_model import FullGenerator, FullGenerator_SR
+from torch import nn
 from torchvision import transforms, utils
-from gpen_model import FullGenerator, FullGenerator_SR
+
 
 class FaceGAN(object):
-    def __init__(self, base_dir='./', in_size=512, out_size=None, model=None, channel_multiplier=2, narrow=1, key=None, is_norm=True, device='cuda'):
-        self.mfile = os.path.join(base_dir, 'weights', model+'.pth')
+    def __init__(
+        self,
+        base_dir="./",
+        in_size=512,
+        out_size=None,
+        model=None,
+        channel_multiplier=2,
+        narrow=1,
+        key=None,
+        is_norm=True,
+        device="cuda",
+    ):
+        self.mfile = os.path.join(base_dir, "weights", model + ".pth")
         self.n_mlp = 8
         self.device = device
         self.is_norm = is_norm
@@ -25,11 +38,27 @@ class FaceGAN(object):
 
     def load_model(self, channel_multiplier=2, narrow=1):
         if self.in_resolution == self.out_resolution:
-            self.model = FullGenerator(self.in_resolution, 512, self.n_mlp, channel_multiplier, narrow=narrow, device=self.device)
+            self.model = FullGenerator(
+                self.in_resolution,
+                512,
+                self.n_mlp,
+                channel_multiplier,
+                narrow=narrow,
+                device=self.device,
+            )
         else:
-            self.model = FullGenerator_SR(self.in_resolution, self.out_resolution, 512, self.n_mlp, channel_multiplier, narrow=narrow, device=self.device)
-        pretrained_dict = torch.load(self.mfile, map_location=torch.device('cpu'))
-        if self.key is not None: pretrained_dict = pretrained_dict[self.key]
+            self.model = FullGenerator_SR(
+                self.in_resolution,
+                self.out_resolution,
+                512,
+                self.n_mlp,
+                channel_multiplier,
+                narrow=narrow,
+                device=self.device,
+            )
+        pretrained_dict = torch.load(self.mfile, map_location=torch.device("cpu"))
+        if self.key is not None:
+            pretrained_dict = pretrained_dict[self.key]
         self.model.load_state_dict(pretrained_dict)
         self.model.to(self.device)
         self.model.eval()
@@ -47,16 +76,16 @@ class FaceGAN(object):
         return out
 
     def img2tensor(self, img):
-        img_t = torch.from_numpy(img).to(self.device)/255.
+        img_t = torch.from_numpy(img).to(self.device) / 255.0
         if self.is_norm:
             img_t = (img_t - 0.5) / 0.5
-        img_t = img_t.permute(2, 0, 1).unsqueeze(0).flip(1) # BGR->RGB
+        img_t = img_t.permute(2, 0, 1).unsqueeze(0).flip(1)  # BGR->RGB
         return img_t
 
     def tensor2img(self, img_t, pmax=255.0, imtype=np.uint8):
         if self.is_norm:
             img_t = img_t * 0.5 + 0.5
-        img_t = img_t.squeeze(0).permute(1, 2, 0).flip(2) # RGB->BGR
+        img_t = img_t.squeeze(0).permute(1, 2, 0).flip(2)  # RGB->BGR
         img_np = np.clip(img_t.float().cpu().numpy(), 0, 1) * pmax
 
         return img_np.astype(imtype)

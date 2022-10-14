@@ -1,3 +1,3 @@
-from .multibox_loss import MultiBoxLoss
+from dcgpen.face_detect.layers.modules.multibox_loss import MultiBoxLoss
 
-__all__ = ['MultiBoxLoss']
+__all__ = ["MultiBoxLoss"]
