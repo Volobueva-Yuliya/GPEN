@@ -5,12 +5,12 @@ import tempfile
 from pathlib import Path
 from zipfile import ZipFile
 
-import cog
 import cv2
 import numpy as np
 from dcgpen.face_colorization import FaceColorization
 from dcgpen.face_enhancement import FaceEnhancement
 from dcgpen.face_inpainting import FaceInpainting, brush_stroke_mask
+from dcgpen.misc import cog
 from PIL import Image
 
 
