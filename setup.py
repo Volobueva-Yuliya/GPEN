@@ -5,7 +5,7 @@ setup(
     version='0.1dev',
     packages=find_packages(),
     license='',
-    python_requires=">=3.8.*",
+    python_requires=">=3.8",
     install_requires=[
         'torch>=1.7',
         'opencv-python',
