@@ -1,14 +1,17 @@
 import cv2
 import numpy as np
+from skimage import io
 from skvideo.io import FFmpegWriter
 from tqdm.auto import tqdm
 
+import fsspec
 from dcgpen import __init_paths
 from dcgpen.align_faces import get_reference_facial_points, warp_and_crop_face
 from dcgpen.face_detect.retinaface_detection import RetinaFaceDetection
 from dcgpen.face_model.face_gan import FaceGAN
 from dcgpen.face_parse.face_parsing import FaceParse
 from dcgpen.sr_model.real_esrnet import RealESRNet
+from kasane.utils.io import get_filesystem_from_path
 
 
 class FaceColorizationSR:
@@ -186,3 +189,36 @@ def read_write_video(class_object, filename: str, outputdict, cap, fps: str):
             img_out, _, _ = class_object.process(frame, aligned=False)
             writer.writeFrame(img_out[..., ::-1])
             bar.update()
+
+
+def read_write_image_folger(class_object, folder_path: str, filename: str, outputdict, fps: str):
+    """Read images from folder and write to video
+
+    Parameters
+    ----------
+    class_object: object of colorization class
+    folder_path: folder with images
+    filename: video file path for writing
+    outputdict: output dictionary parameters, i.e. how to encode the data when writing to file.
+    fps
+    Returns
+    -------
+    none
+    """
+    
+    input_filesystem, _ = get_filesystem_from_path(folder_path)
+    fs = fsspec.filesystem(input_filesystem)
+    image_list = []
+    image_list.extend(fs.glob(f'{folder_path}/*.*g'))
+    image_list = sorted(image_list)
+    
+    writer = FFmpegWriter(
+        filename,
+        inputdict={"-r": fps},
+        outputdict=outputdict,
+    )
+    
+    for image in tqdm(image_list):
+        frame = io.imread(image)[..., ::-1]
+        img_out, _, _ = class_object.process(frame, aligned=False)
+        writer.writeFrame(img_out[..., ::-1])
