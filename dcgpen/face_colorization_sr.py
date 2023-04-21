@@ -206,9 +206,7 @@ def read_write_image_folger(class_object, input_path: str, save_path: str):
     
     input_filesystem, _ = get_filesystem_from_path(input_path)
     fs = fsspec.filesystem(input_filesystem)
-    image_list = []
-    image_list.extend(fs.glob(f'{input_path}/*.*g'))
-    image_list = sorted(image_list)
+    image_list = sorted(fs.glob(f'{input_path}/*.*g'))
     
     for image in tqdm(image_list):
         if input_path.startswith("s3://"):
